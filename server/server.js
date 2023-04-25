@@ -13,14 +13,14 @@ class Server {
       },
     });
 
-    app.use(express.static(__dirname + '/public'));
+    app.use(express.static(__dirname + '/build'));
 
     app.get('/', (req, res) => {
-      res.sendFile(__dirname + '/public/index.html');
+      res.sendFile(__dirname + '/build/index.html');
     });
 
     app.use((req, res) => {
-      res.sendFile(__dirname + '/public/index.html');
+      res.sendFile(__dirname + '/build/index.html');
     });
 
     io.on('connection', (socket) => {

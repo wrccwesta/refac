@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import './GameList.scss';
 import rockClimberLogo from '../../assets/img/rock-climber-logo.png';
+import sizzlingJokerLogo from '../../assets/img/rock-climber-logo.png';
+
 import egyptianTreasuresLogo from '../../assets/img/egyptian-treasures-logo.png';
 import { useSelector } from 'react-redux';
 
@@ -20,7 +22,15 @@ const GameList = (props) => {
             Play
           </Link>
         </div>
+        <div className="game">
+          <img className="logo" src={sizzlingJokerLogo} />
+          
+          <span>Sizzling Joker</span>
 
+          <Link to="play/sizzling-joker" className="btn-play">
+            Play
+          </Link>
+        </div>
         <div className="game">
           <img className="logo" src={rockClimberLogo} />
           

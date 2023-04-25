@@ -7,6 +7,7 @@ const {
 const Server = require('./server');
 const rockClimberData = require('./games-data/rock-climber');
 const egyptianTreasuresData = require('./games-data/egyptian-treasures');
+const sizzlingJokerData = require('./games-data/sizzling-joker');
 
 let db = new sqlite3.Database('./database.db', (err) => {
   if (err) {
@@ -134,6 +135,11 @@ function generateRandomReelsPosition(gameId) {
       reelPositions = egyptianTreasuresData.reelPositions;
       symbolsCount = egyptianTreasuresData.symbolsCount;
       break;
+    case 'sizzling-joker':
+      reelsCount = sizzlingJokerData.reelsCount;
+      reelPositions = sizzlingJokerData.reelPositions;
+      symbolsCount = sizzlingJokerData.symbolsCount;
+      break;
   }
 
   for (let i = 0; i < reelsCount; i++) {
@@ -154,6 +160,9 @@ function generateBetResult(gameId, betAmount) {
       position = generateRandomReelsPosition(gameId);
       break;
     case 'egyptian-treasures':
+      position = generateRandomReelsPosition(gameId);
+      break;
+    case 'sizzling-joker':
       position = generateRandomReelsPosition(gameId);
       break;
   }
@@ -178,6 +187,10 @@ function processReelsPosition(gameId, betAmount, position) {
     case 'egyptian-treasures':
       linesPositions = egyptianTreasuresData.linesPositions;
       symbolsMultipliers = egyptianTreasuresData.symbolsMultipliers;
+      break;
+    case 'sizzling-joker':
+      linesPositions = sizzlingJokerData.linesPositions;
+      symbolsMultipliers = sizzlingJokerData.symbolsMultipliers;
       break;
   }
 
