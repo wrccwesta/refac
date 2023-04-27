@@ -137,7 +137,7 @@ game.onInit(() => {
         winDisplayed = true;
         game.oncePlay(() => {
           game.soundAssets.coinsEffect.pause();
-          winDisplayed = false;
+          winDisplayed = true;
           keepThrowingCoins = false;
         });
       }
@@ -257,17 +257,17 @@ game.onLoading((progress) => {
 
 game.start();
 
-// const themeSoundtrack = new Audio(`${assetsUrl}theme.mp3`);
-// themeSoundtrack.loop = true;
-// themeSoundtrack.volume = 0.2;
-// game.oncePlay(() => {
-//   themeSoundtrack.currentTime = 10;
-//   themeSoundtrack.play();
-// });
+const themeSoundtrack = new Audio(`${assetsUrl}theme.mp3`);
+themeSoundtrack.loop = true;
+themeSoundtrack.volume = 0.2;
+game.oncePlay(() => {
+  themeSoundtrack.currentTime = 10;
+  themeSoundtrack.play();
+});
 
-// game.onDestroy(() => {
-//   themeSoundtrack.pause();
-// });
+game.onDestroy(() => {
+  themeSoundtrack.pause();
+});
 
 window.game = game;
 return game;
