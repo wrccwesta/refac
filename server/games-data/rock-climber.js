@@ -64,6 +64,19 @@ const linesPositions = [
   ],
 ];
 
+const symbolsChances = {
+  1: 14,
+  2: 14,
+  3: 14,
+  4: 14,
+  5: 10,
+  6: 8,
+  7: 8,
+  8: 7,
+  9: 4,
+  10: 4,
+  11: 3,
+};
 const symbolsMultipliers = {
   1: [
     {
@@ -224,7 +237,8 @@ const symbolsMultipliers = {
 module.exports = {
   reelsCount: 5,
   reelPositions: 3,
-  symbolsCount: 8,
+  symbolsCount: 11,
   linesPositions,
   symbolsMultipliers,
+  symbolsChances,
 };

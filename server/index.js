@@ -7,6 +7,9 @@ const {
 const Server = require('./server');
 const rockClimberData = require('./games-data/rock-climber');
 
+var symbolChancesCheck = [];
+
+
 let db = new sqlite3.Database('./database.db', (err) => {
   if (err) {
     console.error(err.message);
@@ -118,6 +121,25 @@ function initIo(io) {
   });
 }
 
+function generateSymbol(generatedSymbols, generatedSymbolsCount)
+{
+  let rngNumber = parseInt(Math.floor(Math.random() * (100 - 1 + 1)) + 1);
+  let generatedSymbolId;
+  let generatedTempChance = 0;
+  let generatedSymbolChance;
+  for (let i = 0; i < generatedSymbolsCount; i++) {
+    generatedSymbolId = (i + 1);
+    generatedSymbolChance = parseInt(generatedSymbols[generatedSymbolId]);
+    generatedTempChance = parseInt(generatedTempChance + generatedSymbolChance);
+    if((generatedTempChance + 1) > rngNumber) {
+      console.log("Symbol: " + generatedSymbolId);
+      console.log("RNG: " + rngNumber);
+      return generatedSymbolId;
+    }
+
+  }
+}
+
 function generateRandomReelsPosition(gameId) {
   const position = [];
   let reelsCount, reelPositions, symbolsCount;
@@ -127,18 +149,30 @@ function generateRandomReelsPosition(gameId) {
       reelsCount = rockClimberData.reelsCount;
       reelPositions = rockClimberData.reelPositions;
       symbolsCount = rockClimberData.symbolsCount;
+      symbolsChances = rockClimberData.symbolsChances;
       break;
+  }
+
+  if(!symbolChancesCheck[gameId]) {
+    let countUp = 0;
+    for (let i = 0; i < symbolsCount; i++) {
+      symbolId = i + 1;
+      countUp = parseInt(countUp + symbolsChances[i]);
+    }
+    if(countUp !== 100) {
+        console.log("ERROR: probabilities for " + gameId + " should be 100 exactly, currently it is: " + countUp);
+    } else {
+      symbolChancesCheck[gameId] = true;
+    }
   }
 
   for (let i = 0; i < reelsCount; i++) {
     position.push(Array.from(Array(reelPositions + 1)).map(() => {
       if(i > 0) {
-        if((Math.random() * 100) < 25) {
-          return parseInt(11);
-        }
+          return parseInt(generateSymbol(symbolsChances, parseInt(symbolsCount)));
+      } else {
+          return parseInt(generateSymbol(symbolsChances, parseInt(symbolsCount - 1)));
       }
-
-        return parseInt(Math.random() * 10) + 1;
     }));
   }
 
