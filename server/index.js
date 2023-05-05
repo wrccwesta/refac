@@ -132,7 +132,13 @@ function generateRandomReelsPosition(gameId) {
 
   for (let i = 0; i < reelsCount; i++) {
     position.push(Array.from(Array(reelPositions + 1)).map(() => {
-      return parseInt(Math.random() * symbolsCount) + 1;
+      if(i > 0) {
+        if((Math.random() * 100) < 25) {
+          return parseInt(11);
+        }
+      }
+
+        return parseInt(Math.random() * 10) + 1;
     }));
   }
 
@@ -184,7 +190,12 @@ function processReelsPosition(gameId, betAmount, position) {
       if (identicalSymbol === symbolsInLine[j]) {
         identicalSymbolsCount++;
       } else {
-        break;
+        if(symbolsInLine[j] === 11) {
+            symbolsInLine[11] = identicalSymbol;
+            identicalSymbolsCount++;
+        } else {        
+          break;
+        }
       }
     }
 

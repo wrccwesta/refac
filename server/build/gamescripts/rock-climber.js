@@ -28,6 +28,10 @@ game.addResource([
     source: `${assetsUrl}main-game-spritesheet.json`,
   },
   {
+    name: 'symbols',
+    source: `${assetsUrl}symbols.json`,
+  },
+  {
     name: 'coin-animation-spritesheet',
     source: `/data/coin-animation-spritesheet.json`,
   },
@@ -84,10 +88,10 @@ async function throwCoins(stage) {
 
 game.onInit(() => {
   const background = game.addSprite('background');
-  background.z = 3;
+  background.z = 1;
 
-  const screen = game.addSprite('screen');
-  screen.z = 1;
+  const screen = game.addSprite('background-overlay');
+  screen.z = 3;
 
   const logoAnimation = PIXI.AnimatedSprite.fromFrames(PIXI.Assets.cache.get('logo-animation-spritesheet').data.animations.logo);
   logoAnimation.x = 1280 / 2;
@@ -108,8 +112,8 @@ game.onInit(() => {
   const reels = game.reelsController.reels;
 
   reels.forEach((reel, i) => {
-    reel.container.x = 245 + (i * 144) + (i * 15);
-    reel.container.y = 90;
+    reel.container.x = 170 + (i * 185);
+    reel.container.y = 85;
     reel.container.z = 2;
   });
 

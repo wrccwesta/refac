@@ -13,7 +13,7 @@ function initControls(game) {
   game.stage.addChild(controls);
 
   const infoText = new PIXI.Text('HOLD SPACE FOR TURBO SPIN', new PIXI.TextStyle({
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 22,
     fill: '#FFFFFF',
   }));
@@ -38,7 +38,7 @@ function initControls(game) {
   });
 
   const creditsLabel = new PIXI.Text('CREDIT', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FDAD00',
   });
@@ -47,7 +47,7 @@ function initControls(game) {
   game.texts.push(creditsLabel);
 
   const creditsValueEuroSign = new PIXI.Text('€', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FFFFFF',
   });
@@ -57,7 +57,7 @@ function initControls(game) {
   game.texts.push(creditsValueEuroSign);
 
   const creditsValue = new PIXI.Text(game.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FFFFFF',
   });
@@ -70,7 +70,7 @@ function initControls(game) {
   });
 
   const betLabel = new PIXI.Text('BET', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FDAD00',
   });
@@ -80,7 +80,7 @@ function initControls(game) {
   game.texts.push(betLabel);
 
   const betValueEuroSign = new PIXI.Text('€', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FFFFFF',
   });
@@ -90,7 +90,7 @@ function initControls(game) {
   game.texts.push(betValueEuroSign);
 
   const betValue = new PIXI.Text(game.betValueToLocale, {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 20,
     fill: '#FFFFFF',
   });
@@ -108,7 +108,7 @@ function initControls(game) {
   controls.addChild(winAmountContainer);
 
   const winLabel = new PIXI.Text('WIN:', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 30,
     fill: '#FDAD00',
   });
@@ -116,7 +116,7 @@ function initControls(game) {
   game.texts.push(winLabel);
 
   const winAmountText = new PIXI.Text('', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 30,
     fill: '#FFFFFF',
   });
@@ -238,7 +238,7 @@ function initControls(game) {
   btnAutoplay.addChild(btnAutoplayBackground);
 
   const btnAutoplayText = new PIXI.Text('AUTOPLAY', new PIXI.TextStyle({
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 12,
     fill: '#FFFFFF',
   }));
@@ -347,7 +347,7 @@ function initBetWindow(game, controls, betValue) {
   container.addChild(btnClose);
 
   const betMultiplerText = new PIXI.Text('BET MULTIPLIER 10x', {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 15,
     fill: '#FDAD00',
   });
@@ -471,7 +471,7 @@ function createBetTool(game, label) {
   const container = new PIXI.Container();
 
   const labelText = new PIXI.Text(label, {
-    fontFamily: 'Archivo Black',
+    fontFamily: 'Inter',
     fontSize: 15,
     fill: '#FFFFFF',
   });
@@ -508,7 +508,7 @@ function createBetTool(game, label) {
   valueBackgroundBorder.addChild(valueBackground);
 
   const valueText = new PIXI.Text('', {
-    fontFamily: 'Google Sans',
+    fontFamily: 'Inter',
     fontWeight: 800,
     fontSize: 16,
     fill: '#FFFFFF',

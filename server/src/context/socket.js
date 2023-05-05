@@ -4,7 +4,7 @@ import store from '../store';
 import lobbySlice from "../lobbySlice";
 
 // export const socket = io.connect('https://sloticon.onrender.com');
-export const socket = io.connect('https://bingobangos-probable-parakeet-rj6wpvp69wrcppvq-3001.preview.app.github.dev');
+export const socket = io.connect('https://satanklauss-organic-garbanzo-jx9rp6gx4rq2jjp5-3001.preview.app.github.dev');
 export const SocketContext = React.createContext();
 
 socket.on('connect', () => {
