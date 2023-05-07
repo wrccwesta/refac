@@ -13,8 +13,8 @@ const game = new Game({
   symbolMargin: 20,
   maskPaddingX: 13,
   maskPaddingY: 14,
-  reelsSpeed: 0.16,
-  spinTimeBetweenReels: 135,
+  reelsSpeed: 0.17,
+  spinTimeBetweenReels: 155,
 }, socket);
 
 const assetsUrl = `/data/${gameId}/`;
@@ -43,6 +43,10 @@ game.addResource([
     name: 'win-animation-spritesheet',
     source: `${assetsUrl}win-animation-spritesheet.json`,
   },
+  {
+    name: 'misc-spritesheet',
+    source: `${assetsUrl}misc-spritesheet.json`,
+  }
 ]);
 
 let keepThrowingCoins = true;
@@ -108,18 +112,38 @@ game.onInit(() => {
     }, 5000);
   };
   game.stage.addChild(logoAnimation);
+  const btnToggleMusic = game.addButton([
+    'music_button1.png',
+    'music_button2.png',
+    'music_button3.png',
+    'music_button4.png',
+  ], () => {
+    themeSoundtrack.muted = !themeSoundtrack.muted;
+    game.soundAssets.coinsEffect.muted = !game.soundAssets.coinsEffect.muted;
+    btnToggleMusic.disabled = themeSoundtrack.muted;
+    btnToggleMusic.disabled = game.soundAssets.coinsEffect.muted;
+  });
+  btnToggleMusic.x = 1200;
+  btnToggleMusic.y = 75;
+  btnToggleMusic.z = 6;
+
+  
+  btnToggleMusic.scale.x *= 0.5;
+  btnToggleMusic.scale.y *= 0.5;
 
   const reels = game.reelsController.reels;
 
   reels.forEach((reel, i) => {
-    reel.container.x = 170 + (i * 185);
-    reel.container.y = 85;
+    reel.container.x = 180 + (i * 195);
+    reel.container.y = 95;
     reel.container.z = 2;
+    reel.container.scale.x *= 0.90;
+    reel.container.scale.y *= 0.90;
   });
 
   const controls = initControls(game);
-  controls.scale.x *= 1.1;
-  controls.scale.y *= 1.1;
+  controls.scale.x *= 1.05;
+  controls.scale.y *= 1.05;
   controls.x -= 1280 * 0.05;
   controls.y = 800 - (controls.height / 2) - 20;
 
