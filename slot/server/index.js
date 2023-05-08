@@ -107,6 +107,11 @@ function initIo(io) {
           await updateBalance(account.id, newBalance);
           await updateGamestate(account.id, data.gameId, data.bet, data.coinValue, JSON.stringify(betResult.position));
 
+          let count = 0;
+          var temp = JSON.stringify(betResult.position);
+          count = (temp.match(/12/g) || []).length;
+          console.log(count);
+
           socket.emit('bet', {
             balance: newBalance,
             reels: betResult.position,
@@ -121,28 +126,9 @@ function initIo(io) {
   });
 }
 
-function generateSymbol(generatedSymbols, generatedSymbolsCount)
-{
-  let rngNumber = parseInt(Math.floor(Math.random() * (100 - 1 + 1)) + 1);
-  let generatedSymbolId;
-  let generatedTempChance = 0;
-  let generatedSymbolChance;
-  for (let i = 0; i < generatedSymbolsCount; i++) {
-    generatedSymbolId = (i + 1);
-    generatedSymbolChance = parseInt(generatedSymbols[generatedSymbolId]);
-    generatedTempChance = parseInt(generatedTempChance + generatedSymbolChance);
-    if((generatedTempChance + 1) > rngNumber) {
-      console.log("Symbol: " + generatedSymbolId);
-      console.log("RNG: " + rngNumber);
-      return generatedSymbolId;
-    }
-
-  }
-}
-
 function generateRandomReelsPosition(gameId) {
   const position = [];
-  let reelsCount, reelPositions, symbolsCount;
+  let reelsCount, reelPositions, symbolsCount, symbolsChances;
 
   switch (gameId) {
     case 'rock-climber':
@@ -157,7 +143,7 @@ function generateRandomReelsPosition(gameId) {
     let countUp = 0;
     for (let i = 0; i < symbolsCount; i++) {
       symbolId = i + 1;
-      countUp = parseInt(countUp + symbolsChances[i]);
+      countUp = countUp + symbolsChances[symbolId];
     }
     if(countUp !== 100) {
         console.log("ERROR: probabilities for " + gameId + " should be 100 exactly, currently it is: " + countUp);
@@ -168,10 +154,17 @@ function generateRandomReelsPosition(gameId) {
 
   for (let i = 0; i < reelsCount; i++) {
     position.push(Array.from(Array(reelPositions + 1)).map(() => {
-      if(i > 0) {
-          return parseInt(generateSymbol(symbolsChances, parseInt(symbolsCount)));
-      } else {
-          return parseInt(generateSymbol(symbolsChances, parseInt(symbolsCount - 1)));
+      let rngNumber = parseInt(Math.floor(Math.random() * (100 - 1 + 1)) + 1);
+      let generatedSymbolId;
+      let generatedTempChance = 0;
+      let generatedSymbolChance;
+      for (let i = 0; i < symbolsCount; i++) {
+        generatedSymbolId = (i + 1);
+        generatedSymbolChance = parseInt(symbolsChances[generatedSymbolId]);
+        generatedTempChance = parseInt(generatedTempChance + generatedSymbolChance);
+        if(generatedTempChance >= rngNumber) {
+          return generatedSymbolId;
+        }
       }
     }));
   }
@@ -199,14 +192,16 @@ function generateBetResult(gameId, betAmount) {
 
 function processReelsPosition(gameId, betAmount, position) {
   const result = [];
-  let linesPositions, symbolsMultipliers;
+  let linesPositions, symbolsMultipliers, freeSpinIcon;
 
   switch (gameId) {
     case 'rock-climber':
       linesPositions = rockClimberData.linesPositions;
       symbolsMultipliers = rockClimberData.symbolsMultipliers;
+      freeSpinIcon = 12;
       break;
   }
+
 
   linesPositions.forEach((linePosition, i) => {
     let symbolsInLine = [];
@@ -232,7 +227,6 @@ function processReelsPosition(gameId, betAmount, position) {
         }
       }
     }
-
     if (identicalSymbolsCount >= 3) {
       result.push({
         number: i + 1,

@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import Axios from 'axios'
 import { AuthDialog } from "@/components/casino/auth-dialog";
 
-export default function GameFrame() {
+export function Gameiframe() {
     const { user } = useAuth({middleware: 'guest'})
     const [slugId, setSlugId] = useState(null);
     const [loadStatus, setLoadStatus] = useState("Loading..")
@@ -32,7 +32,7 @@ export default function GameFrame() {
         if(slugId) {
             if(!initLoad) {
                 setInitLoad(true);
-                Axios.get('/northplay/casino/auth/start-game?slug=' + slugId)
+                Axios.get('/northplay/casino/auth/start-game?currency=USD&debit_currency=BTC&slug=' + slugId)
                 .then(function(response){
                     setGameEntryUrl(response.data.session_url);
                     setIframeLoad(true);

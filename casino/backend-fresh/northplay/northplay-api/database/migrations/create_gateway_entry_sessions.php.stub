@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string("api_mode")->nullable();
             $table->string("game_id");
             $table->string("currency")->default("USD");
+            $table->string("debit_currency")->default("USD");
             $table->string("state")->default("WAITING");
             $table->string("state_message")->nullable();
             $table->boolean("active")->default(true);

@@ -37,7 +37,7 @@ class NorthplayApiServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasRoutes(['api', 'web'])
             ->hasViews('northplay')
-            ->hasMigrations(['create_user_balances', 'create_user_storage', 'create_user_notifications','create_user_balances_transactions', 'create_gateway_entry_sessions', 'create_softswiss_game_tag_table', 'create_softswiss_game_table', 'create_user_external_auth', 'create_currency', 'create_config', 'create_email_log', 'create_datalogger', 'create_games_results', 'create_games', 'create_mp_groups', 'create_mp_rooms'])
+            ->hasMigrations(['create_user_balances', 'create_user_storage', 'create_user_notifications','create_user_balances_transactions', 'create_gateway_entry_sessions', 'create_softswiss_game_tag_table', 'create_softswiss_game_table', 'create_user_external_auth', 'create_currency', 'create_config', 'create_email_log', 'create_gateway_parent_sessions', 'create_datalogger', 'create_games_results', 'create_games', 'create_mp_groups', 'create_mp_rooms'])
             ->hasCommands(NorthplayTestCacheDriver::class, GatewayTransferGames::class, GatewayImportSoftswiss::class, GatewayProcessSoftswiss::class, NorthplayAddBalance::class, NorthplayWebsocketChannelInfo::class, NorthplayWebsocketMessage::class, NorthplayTestPoker::class, ScoobiedogGamesImport::class, NorthplayForceExchangeRateUpdate::class, NorthplaySeederCommand::class, NorthplayApiCommand::class)
             ->hasInstallCommand(function(InstallCommand $command) {
                 $command

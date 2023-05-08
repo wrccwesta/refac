@@ -36,13 +36,28 @@ trait GatewayTrait
 			return hash_hmac('md5', $input, $this->secret_key());
 	}
 
+	public function convert_currency($amount, $origin_currency, $target_currency)
+	{
+		$currency_controller = new \Northplay\NorthplayApi\Controllers\Casino\API\Currency\CurrencyController;
+		$usd_rate = $currency_controller->usd_rate($origin_currency);
+		if($target_currency === 'USD') {
+			return number_format(($usd_rate * $amount), 2, '.', '');
+		} else {
+			return number_format(($usd_rate * ($currency_controller->usd_rate($target_currency))), 2, '.', '');
+		}
+	}
+
+	public function get_debit_currency($user_id, $currency) 
+	{
+		$user_balance = new UserBalanceController;
+		return $user_balance->get_user_balance($user_id, $currency);	
+	}
+
 	public function user_balance($session_id) 
 	{
 		$user_balance = new UserBalanceController;
-
 		$session = $this->select_parent_session($session_id);
-		return $user_balance->get_user_balance($session->user_public_id, $session->currency);	
-		
+		return $user_balance->get_user_balance($session->user_public_id, $session->debit_currency);	
 	}
 
 	public function process_game($session_id, $betAmount, $winAmount, $data = NULL)
@@ -72,6 +87,21 @@ trait GatewayTrait
 		}
 		
 		return $this->user_balance($session_id);
+	}
+
+	public function all_currencies()
+	{
+		$controller = new \Northplay\NorthplayApi\Controllers\Casino\API\Currency\CurrencyController;
+		return $controller->print_currencies();
+	}
+
+	public function convert_amount($debit_currency, $play_currency, $play_amount)
+	{
+		$user_balance = new UserBalanceController;
+		$usd_rate = $this->all_currencies()[$debit_currency]['usd_rate'];
+		$de_int = ($play_amount === 0 ? $play_amount : $play_amount / 10000);
+		$usd_value = number_format(($de_int / ($this->all_currencies()[$sym]['rate_usd'])), 2, ".", "");
+		
 	}
 	
 	public function user_balance_transaction($session_id, $direction, $amount, $tx_description, $tx_data = NULL)

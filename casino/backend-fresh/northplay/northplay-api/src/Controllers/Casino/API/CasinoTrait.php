@@ -22,7 +22,6 @@ trait CasinoTrait
 		$user_balance = new UserBalanceController;
 		return $user_balance->credit_user_balance($user_id, $currency, "balance_bonus", $amount, $tx_data);
 	}
-	
 
 	public function sendNotification($user_id, $title, $short_message, $last_message, $category, $action)
 	{

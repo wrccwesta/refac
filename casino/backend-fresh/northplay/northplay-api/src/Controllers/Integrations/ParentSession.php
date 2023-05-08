@@ -25,6 +25,7 @@ class ParentSession
 				$retrieve_game = $this->select_game($entry_session->game_id);
 				$provider = $retrieve_game->provider;
 				$currency = $entry_session->currency;
+				$debit_currency = $entry_session->debit_currency;
 				$user_private_id = $this->hmac($entry_session->user_id."-".$currency);
 				$time_now = now_nice();
 
@@ -42,6 +43,7 @@ class ParentSession
 					"user_private_id" => $user_private_id,
 					"user_public_id" => $entry_session->user_public_id,
 					"currency" => $currency,
+					"debit_currency" => $debit_currency,
 					"game_id" => $entry_session->game_id,
 					"state" => "INIT",
 					"storage" => json_encode(array("entry_token" => $entry_session->entry_token), JSON_PRETTY_PRINT),

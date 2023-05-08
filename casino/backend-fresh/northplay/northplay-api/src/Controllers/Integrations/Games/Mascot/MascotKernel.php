@@ -42,9 +42,9 @@ class MascotKernel
 
     public function __construct()
     {
-        $this->static_assets_url = "https://static-mascot-eu-edgenetwork.play-gateway.com/mascotGaming/"; //+game_identifier
-        $this->api_url = "https://games.dollardave.app/gw/mascot/game_event/"; //+session_id
-        $this->session_url = "https://game-client-dollardave.play-gateway.com/play/mascot/"; //+session_id
+        $this->static_assets_url = "https://static.mascot.games/mascotGaming/"; //+game_identifier
+        $this->api_url = env('APP_URL')."/northplay/gw/mascot/game_event/"; //+session_id
+        $this->session_url = env('APP_URL')."/northplay/play/mascot/"; //+session_id
     }
 
     /**
@@ -113,6 +113,12 @@ class MascotKernel
         return view("northplay::gateway-mascot-game")->with("session_data", $data);
     }
 
+    public function mascot_balance_helper($internal_token)
+    {
+        $balance = $this->user_balance($internal_token);
+        return (int) ($balance['total_usd'] * 100);
+
+    }
     
     public function game_event($session_id, Request $request)
     {
@@ -139,7 +145,7 @@ class MascotKernel
             Cache::set($internal_token.'::mascot_gameconfig::bet_sizes', $data_origin['bets']);
             Cache::set($internal_token.'::mascot_gameconfig::min_bet', $data_origin['bet']);
             Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $data_origin['balance']);
-            $data_origin['balance'] = $this->user_balance($internal_token);
+            $data_origin['balance'] = $this->mascot_balance_helper($internal_token);
             return $data_origin;
         }
 
@@ -224,7 +230,7 @@ class MascotKernel
         $data_origin['balance'] = (int) $process_and_get_balance;
         } else {
             Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $current_balance);
-            $get_balance = $this->user_balance($internal_token);
+            $get_balance = $this->mascot_balance_helper($internal_token);
             $data_origin['balance'] = (int) $get_balance;
         }
 

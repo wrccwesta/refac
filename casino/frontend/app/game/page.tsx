@@ -9,7 +9,7 @@ import {
 } from "@/components/page-header"
 import { buttonVariants } from "@/components/ui/button"
 import { StyleSwitcher } from "@/components/style-switcher"
-import { GameFrame } from "@/components/casino/game-frame"
+import { Gameiframe } from "@/components/casino/game-frame"
 import { gameRows } from "@/config/site"
 
 import GameRowsWrapper from "@/components/casino/game-row-page-wrapper"
@@ -21,7 +21,7 @@ export default function IndexPage() {
     <div className="container relative pb-10">
     <StyleSwitcher />
     <section className="flex w-full items-center gap-6 pt-6 pb-8 md:py-10">
-<GameFrame />
+<Gameiframe />
         
       </section>
      </div>

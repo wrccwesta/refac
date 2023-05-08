@@ -68,7 +68,7 @@ const symbolsChances = {
   1: 14,
   2: 14,
   3: 14,
-  4: 14,
+  4: 2,
   5: 10,
   6: 8,
   7: 8,
@@ -76,6 +76,7 @@ const symbolsChances = {
   9: 4,
   10: 4,
   11: 3,
+  12: 12,
 };
 const symbolsMultipliers = {
   1: [
@@ -232,12 +233,26 @@ const symbolsMultipliers = {
       multiplier: 0,
     },
   ],
+  12: [
+    {
+      count: 3,
+      multiplier: 1,
+    },
+    {
+      count: 4,
+      multiplier: 2,
+    },
+    {
+      count: 5,
+      multiplier: 3,
+    },
+  ],
 };
 
 module.exports = {
   reelsCount: 5,
   reelPositions: 3,
-  symbolsCount: 11,
+  symbolsCount: 12,
   linesPositions,
   symbolsMultipliers,
   symbolsChances,

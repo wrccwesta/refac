@@ -14,7 +14,7 @@
     <title>{{ $title }}</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no,minimum-scale=1,width=device-width,height=device-height">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="icon" href="favicon.png">
+    <link rel="icon" href="/dev/null.png">
     <link href="main.css" rel="stylesheet">
     <script>window.language="en";
       window.currency="{{ $currency }}";

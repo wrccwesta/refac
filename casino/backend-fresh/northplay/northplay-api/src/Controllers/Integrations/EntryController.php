@@ -52,7 +52,7 @@ class EntryController extends ParentSession
 		 *
 		 * @return string|null
 		 */
-		public function create_entry_session($user_id, $game_id, $currency)
+		public function create_entry_session($user_id, $game_id, $currency, $debit_currency)
 		{	
 				$entry_token = $this->uuid();
 
@@ -66,6 +66,7 @@ class EntryController extends ParentSession
 					"api_mode" => NULL,
 					"game_id" => $game_id,
 					"currency" => $currency,
+					"debit_currency" => $debit_currency,
 					"state" => "CREATED",
 					"active" => true,
 					"updated_at" => now_nice(),

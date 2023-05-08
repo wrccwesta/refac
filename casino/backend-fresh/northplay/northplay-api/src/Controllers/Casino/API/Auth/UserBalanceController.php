@@ -52,10 +52,18 @@ class UserBalanceController extends Controller
 			]);
 			$user_balance = $this->user_balance_model->where("symbol_id", $sym)->where("user_id", $user_id)->first();
 		}
+		$all_currencies = $this->currency_controller->print_currencies();
+
+		$total = $user_balance->balance + $user_balance->balance_bonus;
+		$de_int = ($total === 0 ? $total : $total / 10000);
+		$usd_value = number_format(($de_int / $all_currencies[$sym]['rate_usd']), 2, ".", "");
+
 		$balance = [
 			"balance" => $user_balance->balance,
 			"balance_bonus" => $user_balance->balance_bonus,
-			"total" => $user_balance->balance + $user_balance->balance_bonus,
+			"total" => $total,
+			"total_nice" => floatval($de_int),
+			"total_usd" => $usd_value,
 		];
 		return $balance;
 	}
@@ -68,35 +76,35 @@ class UserBalanceController extends Controller
 		$balance_data = [];
 		$auth = $request->user();
 		foreach($all_currencies as $currency) {
-		$sym = $currency['symbol_id'];
-		$user_balance = $this->get_user_balance($auth->id, $sym);
-		$de_int = (($user_balance['total']) === 0 ? $user_balance['total'] : $user_balance['total'] / 10000);
-		$int_value = (int) ($user_balance['total']);
-		$nice_value = number_format(($de_int), $currency["decimals"], '.', '');
-		$usd_value = number_format(($nice_value / $currency['rate_usd']), $currency["decimals"], ".", "");
-		$balance_data[$sym] = [
-			"name" => $sym,
-			"int" => $int_value,
-			"balance" => $user_balance['balance'],
-			"balance_bonus" => $user_balance['balance_bonus'],
-			"nice" => $nice_value,
-			"rate_updated" => $currency['rate_updated'],
-			"usd" => [
-				"value" => number_format($usd_value, 2, ".", ""),
-				"sym" => "USD",
-				"sign" => "$",
-			],
-			"eur" => [
-				"value" => number_format(($this->currency_controller->convert($usd_value, "EUR")), 2, ".", ""),
-				"sym" => "EUR",
-				"sign" => "€",
-			],
-			"gbp" => [
-				"value" => number_format(($this->currency_controller->convert($usd_value, "GBP")), 2, ".", ""),
-				"sym" => "GBP",
-				"sign" => "£",
-			],
-		];
+			$sym = $currency['symbol_id'];
+			$user_balance = $this->get_user_balance($auth->id, $sym);
+			$de_int = (($user_balance['total']) === 0 ? $user_balance['total'] : $user_balance['total'] / 10000);
+			$int_value = (int) ($user_balance['total']);
+			$nice_value = number_format(($de_int), $currency["decimals"], '.', '');
+			$usd_value = number_format(($nice_value / $currency['rate_usd']), $currency["decimals"], ".", "");
+			$balance_data[$sym] = [
+				"name" => $sym,
+				"int" => $int_value,
+				"balance" => $user_balance['balance'],
+				"balance_bonus" => $user_balance['balance_bonus'],
+				"nice" => $nice_value,
+				"rate_updated" => $currency['rate_updated'],
+				"usd" => [
+					"value" => number_format($usd_value, 2, ".", ""),
+					"sym" => "USD",
+					"sign" => "$",
+				],
+				"eur" => [
+					"value" => number_format(($this->currency_controller->convert($usd_value, "EUR")), 2, ".", ""),
+					"sym" => "EUR",
+					"sign" => "€",
+				],
+				"gbp" => [
+					"value" => number_format(($this->currency_controller->convert($usd_value, "GBP")), 2, ".", ""),
+					"sym" => "GBP",
+					"sign" => "£",
+				],
+			];
 		}
 		return $balance_data;
 	}
