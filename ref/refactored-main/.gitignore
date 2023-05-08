@@ -1,6 +1,0 @@
-node_modules
-vendor
-storage/*
-.next
-archive/frontend
-archive/backend

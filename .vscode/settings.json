@@ -21,5 +21,6 @@
     "editor.wordWrap": "on",
     "editor.cursorStyle": "underline",
     "editor.renderWhitespace": "none",
-    "editor.fontFamily": "Cascadia Code,JetBrains Mono,'Droid Sans Mono', 'monospace', monospace"
+    "editor.fontFamily": "Cascadia Code,JetBrains Mono,'Droid Sans Mono', 'monospace', monospace",
+    "git.ignoreLimitWarning": true
 }
