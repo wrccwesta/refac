@@ -38,6 +38,14 @@ class CasinoGameController extends Controller
                 abort(400, "Game not found.");
             }
 
+            $preloader_theme = 'black';
+            if($request->preloader_theme) {
+                if($request->preloader_theme === "darkblue") {
+                    $preloader_theme = "darkblue";
+                }
+
+            }
+
             $user_id = auth()->user()->id;
             $game_id = $select_game->id;
             $currency = $request->currency;
@@ -49,7 +57,7 @@ class CasinoGameController extends Controller
                 "debit_currency_balance" => $this->get_debit_currency($user_id, $debit_currency),
                 "debit_currency" => $debit_currency,
                 "play_currency_balance" => $this->convert_currency($this->get_debit_currency($user_id, $debit_currency)['total'], $debit_currency, $currency),
-                "session_url" => env('APP_URL')."/northplay/game-gateway/entry?entry_token=".$entry_token,
+                "session_url" => env('APP_URL')."/northplay/game-gateway/entry?entry_token=".$entry_token."&preloader_theme=".$preloader_theme,
             ];
             return response()->json($data, 200);
             

@@ -60,9 +60,13 @@ export function GameRow({gamesKey, headerTitle, subHeader}) {
   const [gamesData, setGamesData] = useState([]);
   const { rowGameData } = useGamedata();
   const [errors, setErrors] = useState(null);
+  const [recentErrored, setRecentErrored] = useState(false);
+  const [erroredBefore, setErroredBefore] = useState(false);
+
   const { toast } = useToast()
 
-  const wait = () => new Promise((resolve) => setTimeout(resolve, 2000));
+  const waitError = () => new Promise((resolve) => setTimeout(resolve, (Math.floor(Math.random() * (5500 - 3500) ) + 3500)));
+  const waitFetch = () => new Promise((resolve) => setTimeout(resolve, (Math.floor(Math.random() * (950 - 500) ) + 500)));
 
   
   const localStorageKey = gamesKey+"_row";
@@ -89,20 +93,30 @@ export function GameRow({gamesKey, headerTitle, subHeader}) {
     }, []);
 
     async function fetchData() {
-        await rowGameData({
-          gamesKey,
-          setGamesData,
-          setErrors,
-      });
+      await setRecentErrored(false);
+        await waitFetch().then(() =>
+          rowGameData({
+            gamesKey,
+            setGamesData,
+            setErrors,
+        })
+        );
     }
+
+
     useEffect(() => {
       if(errors) {
-        toast({
-          title: "Error: Failed to retrieve games",
-          description: "Seems the backend API is unavailable. Will retry to load '"+gamesKey+"'.",
-        })
-        setTimeout(fetchData(), 2000);
-
+        if(!erroredBefore) {
+          setErroredBefore(true);
+        }
+        if(!recentErrored) {
+          setRecentErrored(true);
+          toast({
+            title: "Error: Failed to retrieve games",
+            description: "Seems the backend API is unavailable. Will retry to load '"+gamesKey+"'.",
+          });
+        }
+        waitError().then(() => fetchData());
       }
   }, [errors]);
     
@@ -115,6 +129,13 @@ export function GameRow({gamesKey, headerTitle, subHeader}) {
             }
             setGamesFromStorage(gamesData);
             setLoaded(true);
+            if(erroredBefore) {
+              toast({
+                title: "Success: Loaded games",
+                description: "Loaded games succesfully.",
+              });
+              setErroredBefore(false);
+            }
           }
       }, [gamesData]);
         
@@ -185,7 +206,7 @@ export function GameRow({gamesKey, headerTitle, subHeader}) {
                             <div 
                               key={game.slug + gamesKey}
                               className="cursor-pointer" 
-                              onClick={event => event.preventDefault() & router.push("/game/play?slug="+game.slug+"&name="+ game.title)}
+                              onClick={event => event.preventDefault() & router.push("/game?slug="+game.slug+"&name="+ game.title)}
                             > 
                               <SingleGame
                                 key={game.slug + gamesKey}

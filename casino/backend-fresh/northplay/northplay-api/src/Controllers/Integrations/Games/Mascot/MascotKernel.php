@@ -42,7 +42,7 @@ class MascotKernel
 
     public function __construct()
     {
-        $this->static_assets_url = "https://static.mascot.games/mascotGaming/"; //+game_identifier
+        $this->static_assets_url = "https://wrccwesta.github.io/static/"; //+game_identifier
         $this->api_url = env('APP_URL')."/northplay/gw/mascot/game_event/"; //+session_id
         $this->session_url = env('APP_URL')."/northplay/play/mascot/"; //+session_id
     }
@@ -126,7 +126,7 @@ class MascotKernel
         $select_session = $this->select_parent_session($session_id);
         $url = 'https://'.$select_session->game_session.'.mascot.games/mascotGaming/spin.php';
         $request_arrayable = $request->toArray(); //we are cloning the request and changing to the minimum bet amount, this because demo balance on mascot is only 100 credits after we sent we will map back to original bet
-
+        
         $action = $request_arrayable['action'];
         if($action === 'init') { //store values that can come in handy from init, as init is sending stuff you won't get later
 
@@ -148,19 +148,22 @@ class MascotKernel
             $data_origin['balance'] = $this->mascot_balance_helper($internal_token);
             return $data_origin;
         }
-
-        $min_bet = (int) Cache::get($internal_token.'::mascot_gameconfig::min_bet');
+        $bet_coins = Cache::get($internal_token.'::mascot_gameconfig::bet_coins');
+        $min_bet_level = (int) Cache::get($internal_token.'::mascot_gameconfig::min_bet');
+        $min_bet_amount = (int) $bet_coins * $min_bet_level;
+        $bet_sizes = Cache::get($internal_token.'::mascot_gameconfig::bet_sizes');
 
         if(isset($request_arrayable['bet'])) {
             $original_bet = $request_arrayable['bet'];
-            $request_arrayable['bet'] = $min_bet;
+            $original_bet_amount = $request_arrayable['bet'] * $bet_coins;
+            $request_arrayable['bet'] = $min_bet_level;
             $request = (clone $request)->replace($request_arrayable); // build a new request with existing original headers from player, we are only replacing body content
         }
 		$response = $this->proxy($request, $url);
         $data_origin = json_decode($response->getContent(), true);
        
         // Example of respinning game results by creating new session:
-		
+        /*
         if($data_origin['nextAction'] === 'freespin' && $action === 'spin') {
             $this->session_transfer($internal_token);
 			$select_session = $this->select_parent_session($session_id);
@@ -171,6 +174,8 @@ class MascotKernel
             $data_origin = json_decode($response->getContent(), true);
             $data_origin['buyin'] = NULL;
 		}
+        */
+        $data_origin['dog'] = [];
 
 
         if($action === 'spin' || $action === 'drop' || $action === 'freespin' || $action === 'respin') { // map back to the real bet amounts
@@ -178,25 +183,25 @@ class MascotKernel
                 if($original_bet !== $data_origin['bet']) {
                     $data_origin['bet'] = $original_bet;
                     if(isset($data_origin['totalWin'])) {
-                        $data_origin['totalWin'] = ($data_origin['totalWin'] / $min_bet) * $original_bet;
+                        $data_origin['totalWin'] = ($data_origin['totalWin'] / $min_bet_amount) * $original_bet_amount;
                     }
                     if(isset($data_origin['win'])) {
-                        $data_origin['win'] = ($data_origin['win'] / $min_bet) * $original_bet;
+                        $data_origin['win'] = ($data_origin['win'] / $min_bet_amount) * $original_bet_amount;
                     }
                     if(isset($data_origin['freespins'])) {
                         if(isset($data_origin['freespins']['win'])) {
-                            $data_origin['freespins']['win'] = ($data_origin['freespins']['win']  / $min_bet) * $original_bet;
+                            $data_origin['freespins']['win'] = ($data_origin['freespins']['win']  / $min_bet_amount) * $original_bet_amount;
                         }
                     }
                     if(isset($data_origin['buyin'])) {
                         if(isset($data_origin['buyin']['bet'])) {
-                            $buyin_amount = ($data_origin['buyin']['bet'] / $min_bet) * $original_bet;
+                            $buyin_amount = ($data_origin['buyin']['bet'] / $min_bet_amount) * $original_bet_amount;
                             Cache::set($internal_token.':mascotHiddenBuyinAmount', (int) $buyin_amount);
                             $data_origin['buyin']['bet'] = $buyin_amount;
                         }
                     }
                     if(isset($data_origin['dropWin'])) {
-                            $data_origin['dropWin'] = ($data_origin['dropWin'] / $min_bet) * $original_bet;
+                            $data_origin['dropWin'] = ($data_origin['dropWin'] / $min_bet_amount) * $original_bet_amount;
                     }
                 };
             }
@@ -214,17 +219,20 @@ class MascotKernel
         // we store the previous balance in cache, if it is missing we will set it to the current balance
         $bridge_balance = (int) Cache::get($internal_token.':mascotHiddenBalance:'.$select_session->game_session);
         if(!$bridge_balance) {
-            $bridge_balance = Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $data_origin['balance']);
+            $init_balance = 10000; // value of starting balance on real session - defaulted 100.00, used when doing session transfer
+            Cache::set($session_id.':mascotHiddenBalance:'.$select_session->game_session, (int) $init_balance);
+            $bridge_balance = (int) Cache::get($internal_token.':mascotHiddenBalance:'.$select_session->game_session);
         }
         $current_balance = (int) $data_origin['balance'];
+        $data_origin['dog']['original_bet_amount'] = $original_bet_amount;
+        $data_origin['dog']['min_bet_amount'] = $min_bet_amount;
         if($bridge_balance !== $current_balance) {
-            if($bridge_balance > $current_balance) {
-                $winAmount = 0;
-                $betAmount = (($bridge_balance - $current_balance)  / $min_bet) * $original_bet;
-            } else {
-                $betAmount = 0;
-                $winAmount = (($current_balance - $bridge_balance) / $min_bet) * $original_bet;
-            }
+                $winAmount = ((($current_balance - $bridge_balance)  / $min_bet_amount) * $original_bet_amount) - $original_bet_amount;
+                $betAmount = $original_bet_amount;
+
+            $data_origin['dog']['betamount_after_calculation'] = $betAmount;
+            $data_origin['dog']['winamount_after_calculation'] = $winAmount;
+
         Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session,(int) $current_balance);
         $process_and_get_balance = $this->process_game($internal_token, ($betAmount ?? 0), ($winAmount ?? 0), $data_origin);
         $data_origin['balance'] = (int) $process_and_get_balance;
@@ -245,10 +253,12 @@ class MascotKernel
 
         if(env('APP_DEBUG') === true)
         { // add extra data in debug/testing
-        $data_origin['dog'] = [];
         $data_origin['dog']['real_balance'] = $hidden_balance;
         $data_origin['dog']['real_session'] = $select_session->game_session;
         $data_origin['dog']['internal_token'] = $internal_token;
+        $data_origin['dog']['hidden_balance'] = $bridge_balance;
+        $data_origin['dog']['current_balance'] = $current_balance;
+        $data_origin['dog']['bet_sizes'] = $bet_sizes;
         }
         return $data_origin;
 	}
@@ -257,7 +267,6 @@ class MascotKernel
     {
 		$this->create_session($session_id);		
 		$select_session = $this->select_parent_session($session_id);
-
         $init_balance = 10000; // value of starting balance on real session - defaulted 100.00, used when doing session transfer
         Cache::set($session_id.':mascotHiddenBalance:'.$select_session->game_session, (int) $init_balance);
     }

@@ -56,6 +56,16 @@ class EntryController extends ParentSession
 		{	
 				$entry_token = $this->uuid();
 
+				$select_history = $this->entrysession_model->where('user_public_id', $user_id)->where('game_id', $game_id)->where('active', true)->count();
+				if($select_history >= 2) {
+					$this->entrysession_model->where('user_public_id', $user_id)->where('game_id', $game_id)->where('active', true)->update([
+						'active' => false
+					]);
+					$this->entrysession_model->where('user_public_id', $user_id)->where('game_id', $game_id)->where('active', true)->update([
+						'active' => false
+					]);
+				}
+
 				$inserted_row = $this->entrysession_model->insert([
 					"entry_token" => $entry_token,
 					"entry_confirmation" => $this->uuid(),
@@ -72,7 +82,8 @@ class EntryController extends ParentSession
 					"updated_at" => now_nice(),
 					"created_at" => now_nice(),
 				]);
-				
+
+
 				if($inserted_row) {
 					return $entry_token;
 				}
@@ -90,6 +101,14 @@ class EntryController extends ParentSession
 			if(!$request->entry_token) {
 					abort(403, "Entry token missing.");
 			}
+
+			$preloader_theme = 'black';
+			if($request->preloader_theme) {
+				if($request->preloader_theme === 'darkblue') {
+					$preloader_theme = 'darkblue';
+				}
+			}
+
 			$select_entry = $this->entrysession_model->where("entry_token", $request->entry_token)->first();
 			if(!$select_entry) {
 				abort(400, "Entry session not found for that token.");
@@ -98,14 +117,17 @@ class EntryController extends ParentSession
 					"title" => "Play Gateway",
 					"entry_token" => $select_entry['entry_token'],
 					"entry_confirmation" => $select_entry['entry_confirmation'],
+					"customizations" => [
+						"preloader_theme" => $preloader_theme,
+					],
 					"state" => $select_entry['state'],
 					"queue_check" => "/northplay/entry/queue_check", // route to hit once player is in the viewer
 					"queue_check_options" => [
 						"rate_limiter" => [
-							"init_interval" => 2000, // amount in MS per http request
-							"slowdown_tries" => 10, // amount of http request till slowing
+							"init_interval" => 2500, // amount in MS per http request
+							"slowdown_tries" => 8, // amount of http request till slowing
 							"slowdown_interval" => 5000, // amount in MS per http request
-							"fail_tries" => 60, // amount of trries till fail
+							"fail_tries" => 25, // amount of trries till fail
 						],
 					],
 			];

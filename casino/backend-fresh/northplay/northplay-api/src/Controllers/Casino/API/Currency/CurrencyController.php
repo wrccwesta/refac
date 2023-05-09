@@ -59,21 +59,6 @@ class CurrencyController
          ],
       ];
    }
-   "usd" => [
-      "value" => number_format($usd_value, 2, ".", ""),
-      "sym" => "USD",
-      "sign" => "$",
-   ],
-   "eur" => [
-      "value" => number_format(($this->currency_controller->convert($usd_value, "EUR")), 2, ".", ""),
-      "sym" => "EUR",
-      "sign" => "€",
-   ],
-   "gbp" => [
-      "value" => number_format(($this->currency_controller->convert($usd_value, "GBP")), 2, ".", ""),
-      "sym" => "GBP",
-      "sign" => "£",
-   ],
    public function all() {
       try {
             $currency_array = [];
@@ -86,7 +71,6 @@ class CurrencyController
                   "decimals" => $currency['decimals'],
                   "active" => $currency['active'],
                   "rate_usd" => $currency['rate_usd'],
-                  "rate_usd"
                   "rate_updated" => $currency['rate_updated'],
                   "created_at" => $currency["created_at"],
                   "updated_at" => $currency["updated_at"],

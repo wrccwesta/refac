@@ -62,10 +62,10 @@ trait GatewayTrait
 
 	public function process_game($session_id, $betAmount, $winAmount, $data = NULL)
 	{
-		
 		$debit_completed = 0;
 		$credit_completed = 0;
 		$session = $this->select_parent_session($session_id);
+		return $data;
 
 		if($betAmount > 0) {
 			$user_balance = $this->user_balance($session_id);

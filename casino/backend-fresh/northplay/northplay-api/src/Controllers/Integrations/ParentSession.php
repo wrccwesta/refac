@@ -21,10 +21,16 @@ class ParentSession
 		public function create_parent_session($entry_session)
 		{
 			try {
+				
 				$session_id = $this->uuid();
 				$retrieve_game = $this->select_game($entry_session->game_id);
 				$provider = $retrieve_game->provider;
 				$currency = $entry_session->currency;
+				if($entry_session->active === false) {
+					$this->update_entry_session($entry_session->entry_token, "state", "FAILED");
+					$this->update_entry_session($entry_session->entry_token, "state_message", "Entry session was set to inactive (probably because of user creating new session in the meantime).");
+					return;
+				}
 				$debit_currency = $entry_session->debit_currency;
 				$user_private_id = $this->hmac($entry_session->user_id."-".$currency);
 				$time_now = now_nice();

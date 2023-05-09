@@ -32,25 +32,30 @@ export function Gameiframe() {
         if(slugId) {
             if(!initLoad) {
                 setInitLoad(true);
-                Axios.get('/northplay/casino/auth/start-game?currency=USD&debit_currency=BTC&slug=' + slugId)
+                Axios.get('/northplay/casino/auth/start-game?preloader_theme=darkblue&currency=USD&debit_currency=BTC&slug=' + slugId)
                 .then(function(response){
                     setGameEntryUrl(response.data.session_url);
                     setIframeLoad(true);
                     setLoadStatus("Loaded");
+                    
                 })
                 .catch(function(error){
                     if(error.response) {
+                      if(error.response.status === 401) {
+                        if(!user) {
+                          setLoadAuthButtons(true);
+                          setLoadStatus(null);
+                        }
+                      }
                       if(error.response.statusText) {
                           setLoadStatus(error.response.statusText);
-                          if(error.response.status === 401) {
-                            if(!user) {
-                              setLoadAuthButtons(true);
-                              setLoadStatus(null);
-                            }
-                          }
                       } else {
                         console.log(error);
+                        if(error.response.status === 401) {
+                        setLoadStatus("Please login:  ");
+                        } else {
                         setLoadStatus("An unknown error occured..");
+                        }
                       }
                     } else {
                       console.log(error);
@@ -63,29 +68,20 @@ export function Gameiframe() {
 
   return (
     <>
-      <Head>
-        <title>Northplay</title>
-        <meta
-          name="description"
-          content="Northplay Casino, come and play!"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <section key="game-page-container" className="container grid px-2 py-4 md:py-10 md:px-6">
           <div>
              <div className="space-y-1">
                 <h2 className="text-2xl font-semibold tracking-tight">
-                  Play Game 
+                  Game 
                 </h2>
               </div>
             <Separator className="my-4" />
             <div className="flex h-[70vh] max-h-[550px] shrink-0 items-center justify-center rounded-md border border-dashed border-slate-200 dark:border-slate-700">
                 
                 {iframeLoad ? 
-                <iframe className="h-full w-full rounded-md" src={gameEntryUrl}></iframe>
+               <iframe className="h-full w-full rounded-md" src={gameEntryUrl}></iframe>
                 : 
-                <p>{loadStatus}</p>
+                <div className="pl-4 pr-4"> {loadStatus} </div>
                 }
                 {loadAuthButtons ?
                   <AuthDialog />
