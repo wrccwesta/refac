@@ -40,11 +40,14 @@ class MascotKernel
      * @return void
      */
 
+    protected $dogDebug;
+
     public function __construct()
     {
         $this->static_assets_url = "https://wrccwesta.github.io/static/"; //+game_identifier
         $this->api_url = env('APP_URL')."/northplay/gw/mascot/game_event/"; //+session_id
         $this->session_url = env('APP_URL')."/northplay/play/mascot/"; //+session_id
+        $this->dogDebug = [];
     }
 
     /**
@@ -112,12 +115,24 @@ class MascotKernel
         ];
         return view("northplay::gateway-mascot-game")->with("session_data", $data);
     }
+    
+    public function dogDebugger($key, $value)
+    {
+        if(env('APP_DEBUG') === true)
+        { // add extra data in debug/testing
+        $this->dogDebug[$key] = $value;
+        }
+    }
 
     public function mascot_balance_helper($internal_token)
     {
         $balance = $this->user_balance($internal_token);
-        return (int) ($balance['total_usd'] * 100);
+        return $this->convert_balance_helper($balance);
+    }
 
+    public function convert_balance_helper($array)
+    {
+        return (int) ($array['total_usd'] * 100);
     }
     
     public function game_event($session_id, Request $request)
@@ -126,8 +141,8 @@ class MascotKernel
         $select_session = $this->select_parent_session($session_id);
         $url = 'https://'.$select_session->game_session.'.mascot.games/mascotGaming/spin.php';
         $request_arrayable = $request->toArray(); //we are cloning the request and changing to the minimum bet amount, this because demo balance on mascot is only 100 credits after we sent we will map back to original bet
-        
         $action = $request_arrayable['action'];
+
         if($action === 'init') { //store values that can come in handy from init, as init is sending stuff you won't get later
 
 			// Sending request to provider
@@ -146,22 +161,29 @@ class MascotKernel
             Cache::set($internal_token.'::mascot_gameconfig::min_bet', $data_origin['bet']);
             Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $data_origin['balance']);
             $data_origin['balance'] = $this->mascot_balance_helper($internal_token);
+            $this->upsert_parent_session_storage($internal_token, "bet_sizes",  $data_origin['bets']);
+            $this->upsert_parent_session_storage($internal_token, "min_bet",  $data_origin['bet']);
+            $this->upsert_parent_session_storage($internal_token, "bet_coins",  $data_origin['betCoins']);
+
             return $data_origin;
         }
         $bet_coins = Cache::get($internal_token.'::mascot_gameconfig::bet_coins');
         $min_bet_level = (int) Cache::get($internal_token.'::mascot_gameconfig::min_bet');
         $min_bet_amount = (int) $bet_coins * $min_bet_level;
         $bet_sizes = Cache::get($internal_token.'::mascot_gameconfig::bet_sizes');
+        $original_bet_amount = null;
+        $original_bet = null;
 
         if(isset($request_arrayable['bet'])) {
             $original_bet = $request_arrayable['bet'];
-            $original_bet_amount = $request_arrayable['bet'] * $bet_coins;
+            Cache::set($internal_token.'::mascot_gameconfig::original_bet', $request_arrayable['bet']);
+            //$this->upsert_parent_session_storage($internal_token, "original_bet", $original_bet);
             $request_arrayable['bet'] = $min_bet_level;
             $request = (clone $request)->replace($request_arrayable); // build a new request with existing original headers from player, we are only replacing body content
         }
+
 		$response = $this->proxy($request, $url);
         $data_origin = json_decode($response->getContent(), true);
-       
         // Example of respinning game results by creating new session:
         /*
         if($data_origin['nextAction'] === 'freespin' && $action === 'spin') {
@@ -175,10 +197,19 @@ class MascotKernel
             $data_origin['buyin'] = NULL;
 		}
         */
-        $data_origin['dog'] = [];
-
+        if(isset($data_origin['buyin'])) {
+            Cache::set($internal_token.'::mascot_gameconfig::min_buyin_config', $data_origin['buyin']);
+        }
+        if($action === 'buyin') { // buyin feature, based on cache that set before as mascot is using variable buyin feature cost amount
+            return $data_origin;
+        }
 
         if($action === 'spin' || $action === 'drop' || $action === 'freespin' || $action === 'respin') { // map back to the real bet amounts
+            if(!$original_bet) {
+                abort(400, "Origin bet missing");
+            }
+            $original_bet_amount = $original_bet * $bet_coins;
+
             if(isset($data_origin['bet'])) {
                 if($original_bet !== $data_origin['bet']) {
                     $data_origin['bet'] = $original_bet;
@@ -193,13 +224,7 @@ class MascotKernel
                             $data_origin['freespins']['win'] = ($data_origin['freespins']['win']  / $min_bet_amount) * $original_bet_amount;
                         }
                     }
-                    if(isset($data_origin['buyin'])) {
-                        if(isset($data_origin['buyin']['bet'])) {
-                            $buyin_amount = ($data_origin['buyin']['bet'] / $min_bet_amount) * $original_bet_amount;
-                            Cache::set($internal_token.':mascotHiddenBuyinAmount', (int) $buyin_amount);
-                            $data_origin['buyin']['bet'] = $buyin_amount;
-                        }
-                    }
+
                     if(isset($data_origin['dropWin'])) {
                             $data_origin['dropWin'] = ($data_origin['dropWin'] / $min_bet_amount) * $original_bet_amount;
                     }
@@ -207,13 +232,6 @@ class MascotKernel
             }
         }
         
-        if($action === 'buyin') { // buyin feature, based on cache that set before as mascot is using variable buyin feature cost amount
-            $buyin_amount = (int) Cache::get($internal_token.':mascotHiddenBuyinAmount');
-            $data_origin['bet'] = $buyin_amount;
-            $process_and_get_balance = $this->process_game($internal_token, ($buyin_amount), 0, $data_origin);
-            $data_origin['balance'] = (int) $process_and_get_balance;
-            return $data_origin;
-        }
 
         // calculate balance differences from real session, multiplied by the bet value (as balance differences will be on min. bet settings)
         // we store the previous balance in cache, if it is missing we will set it to the current balance
@@ -224,26 +242,27 @@ class MascotKernel
             $bridge_balance = (int) Cache::get($internal_token.':mascotHiddenBalance:'.$select_session->game_session);
         }
         $current_balance = (int) $data_origin['balance'];
-        $data_origin['dog']['original_bet_amount'] = $original_bet_amount;
-        $data_origin['dog']['min_bet_amount'] = $min_bet_amount;
+        $this->dogDebugger('original_bet_amount', $original_bet_amount);
+        $this->dogDebugger('min_bet_amount', $min_bet_amount);
         if($bridge_balance !== $current_balance) {
-                $winAmount = ((($current_balance - $bridge_balance)  / $min_bet_amount) * $original_bet_amount) - $original_bet_amount;
-                $betAmount = $original_bet_amount;
+            $winAmountTemp = (((($current_balance + $min_bet_amount) - $bridge_balance)  / $min_bet_amount) * $original_bet_amount);
+            $winAmount = $winAmountTemp > 0 ? $winAmountTemp : 0;
+            $betAmount = $original_bet_amount;
+            $this->dogDebugger('betamountAfterCalculation', $betAmount);
+            $this->dogDebugger('winamountAfterCalculation', $winAmount);
+            $this->dogDebugger('winAmountTemp', $winAmountTemp);
 
-            $data_origin['dog']['betamount_after_calculation'] = $betAmount;
-            $data_origin['dog']['winamount_after_calculation'] = $winAmount;
-
-        Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session,(int) $current_balance);
-        $process_and_get_balance = $this->process_game($internal_token, ($betAmount ?? 0), ($winAmount ?? 0), $data_origin);
-        $data_origin['balance'] = (int) $process_and_get_balance;
-        } else {
-            Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $current_balance);
-            $get_balance = $this->mascot_balance_helper($internal_token);
-            $data_origin['balance'] = (int) $get_balance;
+            Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session,(int) $current_balance);
+            $process_and_get_balance = $this->process_game($internal_token, ($betAmount ?? 0), ($winAmount ?? 0), $data_origin);
+            $data_origin['balance'] = (int) $this->convert_balance_helper($process_and_get_balance);
+            } else {
+                Cache::set($internal_token.':mascotHiddenBalance:'.$select_session->game_session, (int) $current_balance);
+                $get_balance = $this->mascot_balance_helper($internal_token);
+                $data_origin['balance'] = (int) $get_balance;
         }
 
         $hidden_balance = (int) Cache::get($internal_token.':mascotHiddenBalance:'.$select_session->game_session);
-        if($hidden_balance < 2500) { // let's create new _real_ session in background when real session's balance is running low (2500 is if below 25$)
+        if($hidden_balance < 50000) { // let's create new _real_ session in background when real session's balance is running low (2500 is if below 25$)
             if(isset($data_origin['nextAction'])) {
                 if($data_origin['nextAction'] === "spin") {
                     $this->session_transfer($internal_token);
@@ -251,15 +270,12 @@ class MascotKernel
             }
         }
 
-        if(env('APP_DEBUG') === true)
-        { // add extra data in debug/testing
-        $data_origin['dog']['real_balance'] = $hidden_balance;
-        $data_origin['dog']['real_session'] = $select_session->game_session;
-        $data_origin['dog']['internal_token'] = $internal_token;
-        $data_origin['dog']['hidden_balance'] = $bridge_balance;
-        $data_origin['dog']['current_balance'] = $current_balance;
-        $data_origin['dog']['bet_sizes'] = $bet_sizes;
-        }
+        $this->dogDebugger('real_balance', $select_session->game_session);
+        $this->dogDebugger('internal_token', $internal_token);
+        $this->dogDebugger('hidden_balance', $bridge_balance);
+        $this->dogDebugger('current_balance', $current_balance);
+        $this->dogDebugger('bet_sizes', $bet_sizes);
+        $data_origin['dog'] = $this->dogDebug;
         return $data_origin;
 	}
 

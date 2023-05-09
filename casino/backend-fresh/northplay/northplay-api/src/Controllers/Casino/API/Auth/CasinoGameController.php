@@ -53,10 +53,6 @@ class CasinoGameController extends Controller
             $entry_token = $this->entry_controller->create_entry_session($user_id, $game_id, $currency, $debit_currency);
             $data = [
                 "success" => true,
-                "debit_currency" => $debit_currency,
-                "debit_currency_balance" => $this->get_debit_currency($user_id, $debit_currency),
-                "debit_currency" => $debit_currency,
-                "play_currency_balance" => $this->convert_currency($this->get_debit_currency($user_id, $debit_currency)['total'], $debit_currency, $currency),
                 "session_url" => env('APP_URL')."/northplay/game-gateway/entry?entry_token=".$entry_token."&preloader_theme=".$preloader_theme,
             ];
             return response()->json($data, 200);

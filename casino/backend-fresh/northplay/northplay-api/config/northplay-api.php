@@ -6,7 +6,7 @@ return [
     'registration_bonus' => [
         "enabled" => true,
         "currency" => "BTC",
-        "amount" => 1, //int amount, 1$ = 10000
+        "amount" => 1000000, //int amount, 1$ = 10000
     ],
     'evercookie' => [
         'name' => env('EVERCOOKIE_COOKIE_NAME', 'northplay'),

@@ -9,7 +9,6 @@ use Illuminate\Http\UploadedFile as HttpUploadedFile;
 use Illuminate\Support\Facades\Http;
 
 class ProxyController {
-
     //Original request
     private Request $originalRequest;
     //Params from multipart requests
@@ -31,13 +30,13 @@ class ProxyController {
     //Settings
     private $useDefaultAuth;
     //It's recommandable check manually (for multipart exceptions and other things)
-    // private $useDefaultHeaders;
+    private $useDefaultHeaders;
 
-    public function CreateProxy(Request $request, $useDefaultAuth = true /*, $useDefaultHeaders = false*/){
+    public function CreateProxy(Request $request, $useDefaultAuth = true, $useDefaultHeaders = false){
         $this->originalRequest = $request;
         $this->multipartParams = $this->GetMultipartParams();
         $this->useDefaultAuth = $useDefaultAuth;
-        // $this->useDefaultHeaders = $useDefaultHeaders;
+        $this->useDefaultHeaders = $useDefaultHeaders;
         return $this;
     }
 
@@ -54,13 +53,13 @@ class ProxyController {
     public function preserveQuery($preserve){ $this->addQuery = $preserve; return $this; }
 
     public function getResponse($url){
-        
+
         $info = $this->getRequestInfo();
-        
+
         $http = $this->createHttp($info['type']);
         $http = $this->setAuth($http, $info['token']);
         $http = $this->setHeaders($http);
-        
+
         if($this->addQuery && $info['query'])
             $url = $url.'?'.http_build_query($info['query']);
 
@@ -72,7 +71,7 @@ class ProxyController {
     public function toUrl($url){ return $this->getResponse($url); }
 
     public function toHost($host, $proxyController){
-        return $this->getResponse($host.str_replace($proxyController, '', $this->originalRequest->path())); 
+        return $this->getResponse($host.str_replace($proxyController, '', $this->originalRequest->path()));
     }
 
     private function getParams($info){
@@ -88,7 +87,6 @@ class ProxyController {
                 unset($defaultParams[array_search(['name' => $key,'contents' => $value], $defaultParams)]);
         return $defaultParams;
     }
-
     private function setAuth(PendingRequest $request, $currentAuth = null){
         if(!$this->authorization)
             return $request;
@@ -115,15 +113,15 @@ class ProxyController {
     private function createHttp($type){
         switch ($type) {
             case 'multipart':
-                return Http::timeout(10)->asMultipart();
+                return Http::asMultipart();
             case 'form':
-                return Http::timeout(10)->asForm();
+                return Http::asForm();
             case 'json':
-                return Http::timeout(10)->asJson();
+                return Http::asJson();
             case null:
                 return new PendingRequest();
             default:
-                return Http::timeout(10)->contentType($type);
+            return Http::asJson();
         }
     }
 
@@ -149,8 +147,8 @@ class ProxyController {
 
     private function getRequestInfo(){
         return [
-            'type' => ($this->originalRequest->isJson() ? 'json' : 
-                    (strpos($this->originalRequest->header('Content-Type'),'multipart') !== false ? 'multipart' : 
+            'type' => ($this->originalRequest->isJson() ? 'json' :
+                    (strpos($this->originalRequest->header('Content-Type'),'multipart') !== false ? 'multipart' :
                     ($this->originalRequest->header('Content-Type') == 'application/x-www-form-urlencoded' ? 'form' : $this->originalRequest->header('Content-Type')))),
             'agent' => $this->originalRequest->userAgent(),
             'method' => $this->originalRequest->method(),

@@ -55,7 +55,7 @@ class UserBalanceController extends Controller
 		$all_currencies = $this->currency_controller->print_currencies();
 
 		$total = $user_balance->balance + $user_balance->balance_bonus;
-		$de_int = ($total === 0 ? $total : $total / 10000);
+		$de_int = ($total === 0 ? $total : $total / (number_format(1, $all_currencies[$sym]['decimals'], '', '')));
 		$usd_value = number_format(($de_int / $all_currencies[$sym]['rate_usd']), 2, ".", "");
 
 		$balance = [
@@ -78,7 +78,7 @@ class UserBalanceController extends Controller
 		foreach($all_currencies as $currency) {
 			$sym = $currency['symbol_id'];
 			$user_balance = $this->get_user_balance($auth->id, $sym);
-			$de_int = (($user_balance['total']) === 0 ? $user_balance['total'] : $user_balance['total'] / 10000);
+			$de_int = (($user_balance['total']) === 0 ? $user_balance['total'] : $user_balance['total'] / (number_format(1, $all_currencies[$sym]['decimals'], '', '')));
 			$int_value = (int) ($user_balance['total']);
 			$nice_value = number_format(($de_int), $currency["decimals"], '.', '');
 			$usd_value = number_format(($nice_value / $currency['rate_usd']), $currency["decimals"], ".", "");

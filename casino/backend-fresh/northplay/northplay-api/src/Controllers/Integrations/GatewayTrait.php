@@ -65,25 +65,35 @@ trait GatewayTrait
 		$debit_completed = 0;
 		$credit_completed = 0;
 		$session = $this->select_parent_session($session_id);
-		return $data;
+		$select_currency = $this->all_currencies()[$session->debit_currency];
+		$usd_rate = $select_currency['rate_usd'];
+		
+		$betAmount = ($betAmount === 0 ? $betAmount : $betAmount / 100);
+		$betAmountDebit = ($betAmount * ($usd_rate)) * (number_format(1, $select_currency['decimals'], '', ''));
 
-		if($betAmount > 0) {
+		if($betAmountDebit > 0) {
 			$user_balance = $this->user_balance($session_id);
 			$debit_completed = "insufficient_funds";
-			if($user_balance < $betAmount) {
+			if($user_balance['total'] < $betAmountDebit) {
 				if($this->is_development_state()) {
 					save_log("GatewayTrait", "Tried to charge user more then he has in game event: ".json_encode($data));
 					abort(400, "User has insufficient funds to process game: ".json_encode($data));
 				}
 				return "insufficient funds";
 			}
-			$debit_completed = $this->user_balance_transaction($session_id, "debit", (int) $betAmount, "Slot game event", array("session" => $session, "game_data" => $data));
+			if($user_balance['balance'] > 0) {
+				$balance_type = "balance";
+			} else {
+				$balance_type = "balance_bonus";
+			}
+			$this->user_balance_transaction($session_id, "debit", $balance_type, (int) $betAmountDebit, "Slot game event", array("session" => $session, "game_data" => $data));
+
 		}
 		
 		if($winAmount > 0) {
-			if($debit_completed !== "insufficient_funds") {
-				$credit_completed = $this->user_balance_transaction($session_id, "credit", (int) $winAmount, "Slot game event", array("session" => $session, "game_data" => $data));
-			}
+			$winAmount = ($winAmount === 0 ? $winAmount : $winAmount / 100);
+			$winAmountCredit = ($winAmount * ($usd_rate)) * (number_format(1, $select_currency['decimals'], '', ''));
+			$this->user_balance_transaction($session_id, "credit", $balance_type, (int) $winAmountCredit, "Slot game event", array("session" => $session, "game_data" => $data));
 		}
 		
 		return $this->user_balance($session_id);
@@ -104,17 +114,17 @@ trait GatewayTrait
 		
 	}
 	
-	public function user_balance_transaction($session_id, $direction, $amount, $tx_description, $tx_data = NULL)
+	public function user_balance_transaction($session_id, $direction, $balance_type, $amount, $tx_description, $tx_data = NULL)
 	{
 		$session = $this->select_parent_session($session_id);
 
 		$user_balance = new UserBalanceController;
 		
 		if($direction === "credit") {
-			return $user_balance->credit_user_balance($session->user_public_id, $session->currency, $amount, $tx_description, $tx_data);
+			return $user_balance->credit_user_balance($session->user_public_id, $session->debit_currency, $balance_type, $amount, $tx_description, $tx_data);
 		} 
 		if($direction === "debit")  {
-			return $user_balance->debit_user_balance($session->user_public_id, $session->currency, $amount, $tx_description, $tx_data);
+			return $user_balance->debit_user_balance($session->user_public_id, $session->debit_currency, $balance_type, $amount, $tx_description, $tx_data);
 		}
 		
 		abort(400, "You can only debit or credit user balance");		
